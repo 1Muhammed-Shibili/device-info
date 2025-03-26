@@ -33,6 +33,16 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  String getTotalStorage() {
+    var totalSpace = File("/").statSync().size;
+    return '${(totalSpace / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+  }
+
+  String getAvailableStorage() {
+    var freeSpace = File("/").statSync().size;
+    return '${(freeSpace / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,8 +79,12 @@ class _HomePageState extends State<HomePage> {
                 item('Android Hardware', info.hardware),
                 item('Android Host', info.host),
                 item('Android ID', info.id),
+                item('Android Serial', info.serialNumber ?? 'N/A'),
                 item('Android Is Physical', info.isPhysicalDevice.toString()),
                 item('Android SDK Int', info.version.sdkInt.toString()),
+                // item('IMEI (If Available)', deviceId),
+                item('Total Storage', getTotalStorage()),
+                item('Available Storage', getAvailableStorage())
               ],
             ),
           );
