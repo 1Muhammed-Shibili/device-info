@@ -1,21 +1,19 @@
 package com.example.flutter_application
 
-import android.Manifest
-import android.content.pm.PackageManager
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.os.StatFs
 import android.provider.Settings
-import android.telephony.TelephonyManager
 import androidx.annotation.NonNull
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "device/info"
-    private val REQUEST_CODE = 1
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -24,31 +22,38 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "deviceId" -> {
                     val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-                    result.success(androidId) // Return Android ID instead of IMEI
+                    result.success(androidId)
                 }
-                "getIMEI" -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        result.error("UNAVAILABLE", "IMEI access is restricted on Android 10+", null)
-                    } else {
-                        val telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
-
-                        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-                            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_PHONE_STATE), REQUEST_CODE)
-                            result.error("PERMISSION_DENIED", "READ_PHONE_STATE permission required", null)
-                        } else {
-                            val imei = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                telephonyManager.imei
-                            } else {
-                                telephonyManager.deviceId
-                            }
-                            result.success(imei)
-                        }
-                    }
+                "getTotalStorage" -> {
+                    result.success(getTotalStorage())
+                }
+                "getAvailableStorage" -> {
+                    result.success(getAvailableStorage())
                 }
                 else -> {
                     result.notImplemented()
                 }
             }
         }
+    }
+
+    private fun getTotalStorage(): String {
+        val stat = StatFs(Environment.getDataDirectory().path)
+        val totalBytes = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            stat.totalBytes
+        } else {
+            (stat.blockSize.toLong() * stat.blockCount.toLong())
+        }
+        return "%.2f GB".format(totalBytes / (1024.0 * 1024.0 * 1024.0))
+    }
+
+    private fun getAvailableStorage(): String {
+        val stat = StatFs(Environment.getDataDirectory().path)
+        val availableBytes = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            stat.availableBytes
+        } else {
+            (stat.blockSize.toLong() * stat.availableBlocks.toLong())
+        }
+        return "%.2f GB".format(availableBytes / (1024.0 * 1024.0 * 1024.0))
     }
 }

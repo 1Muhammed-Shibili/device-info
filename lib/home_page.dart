@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
@@ -14,33 +13,35 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final deviceInfoPlugin = DeviceInfoPlugin();
+  String serialNumber = "Fetching...";
+  String totalStorage = "Fetching...";
+  String availableStorage = "Fetching...";
+
+  @override
   void initState() {
-    init();
     super.initState();
+    init();
   }
 
   init() async {
-    final result = await callNativeMethod();
-    log(result);
+    final result = await callNativeMethod("deviceId");
+    final total = await callNativeMethod("getTotalStorage");
+    final available = await callNativeMethod("getAvailableStorage");
+
+    setState(() {
+      serialNumber = result;
+      totalStorage = total;
+      availableStorage = available;
+    });
   }
 
-  Future<String> callNativeMethod() async {
+  Future<String> callNativeMethod(String method) async {
     const platform = MethodChannel('device/info');
     try {
-      return await platform.invokeMethod('deviceId');
+      return await platform.invokeMethod(method);
     } catch (e) {
-      return '';
+      return 'Error';
     }
-  }
-
-  String getTotalStorage() {
-    var totalSpace = File("/").statSync().size;
-    return '${(totalSpace / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
-  }
-
-  String getAvailableStorage() {
-    var freeSpace = File("/").statSync().size;
-    return '${(freeSpace / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
   }
 
   @override
@@ -55,14 +56,14 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.black,
       ),
       body: Platform.isAndroid
-          ? showAndoridInfo()
+          ? showAndroidInfo()
           : Platform.isIOS
               ? showIOSInfo()
               : Container(),
     );
   }
 
-  showAndoridInfo() {
+  Widget showAndroidInfo() {
     return FutureBuilder(
       future: deviceInfoPlugin.androidInfo,
       builder: (context, snapshot) {
@@ -79,12 +80,11 @@ class _HomePageState extends State<HomePage> {
                 item('Android Hardware', info.hardware),
                 item('Android Host', info.host),
                 item('Android ID', info.id),
-                item('Android Serial', info.serialNumber ?? 'N/A'),
+                item('Android Serial', serialNumber),
                 item('Android Is Physical', info.isPhysicalDevice.toString()),
                 item('Android SDK Int', info.version.sdkInt.toString()),
-                // item('IMEI (If Available)', deviceId),
-                item('Total Storage', getTotalStorage()),
-                item('Available Storage', getAvailableStorage())
+                item('Total Storage', totalStorage),
+                item('Available Storage', availableStorage),
               ],
             ),
           );
@@ -95,14 +95,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  showIOSInfo() {
+  Widget showIOSInfo() {
     return FutureBuilder(
       future: deviceInfoPlugin.iosInfo,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(
-            child: Text(snapshot.error.toString()),
-          );
+          return Center(child: Text(snapshot.error.toString()));
         } else if (snapshot.hasData) {
           IosDeviceInfo info = snapshot.data!;
           return SingleChildScrollView(
@@ -123,7 +121,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  item(String name, String value) {
+  Widget item(String name, String value) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(vertical: 15),
