@@ -1,16 +1,3 @@
-# flutter_application
+# Device Info Using Fluter
+![Screenshot 2025-03-26 120833](https://github.com/user-attachments/assets/c507c2b1-903a-4923-b42a-ce5cbb002e31)
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
